@@ -4,9 +4,11 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui printsupport
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+
+
 
 TARGET = PaintApp
 TEMPLATE = app
@@ -25,10 +27,12 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
         main.cpp \
-        mainwindow.cpp
+        mainwindow.cpp \
+    scribblearea.cpp
 
 HEADERS += \
-        mainwindow.h
+        mainwindow.h \
+    scribblearea.h
 
 FORMS += \
         mainwindow.ui
