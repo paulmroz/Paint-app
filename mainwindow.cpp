@@ -1,5 +1,4 @@
 #include <QtWidgets>
-//#include <QtGui>
 #include "mainwindow.h"
 #include "scribblearea.h"
 

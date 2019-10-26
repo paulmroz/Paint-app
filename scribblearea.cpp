@@ -1,5 +1,4 @@
 #include <QtWidgets>
-//#include <QtGui>
 #if defined(QT_PRINTSUPPORT_LIB)
 #include <QtPrintSupport/qtprintsupportglobal.h>
 #if QT_CONFIG(printdialog)
@@ -144,13 +143,12 @@ void ScribbleArea::resizeImage(QImage *image, const QSize &newSize)
 
 void ScribbleArea::print()
 {
-    // Check for print dialog availability
+
 #if QT_CONFIG(printdialog)
 
-    // Can be used to print
+
     QPrinter printer(QPrinter::HighResolution);
 
-    // Open printer dialog and print if asked
     QPrintDialog printDialog(&printer, this);
     if (printDialog.exec() == QDialog::Accepted) {
         QPainter painter(&printer);
