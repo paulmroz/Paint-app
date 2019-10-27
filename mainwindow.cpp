@@ -128,7 +128,7 @@ void MainWindow::createActions()
     penRubberAct = new QAction(tr("Gumka..."), this);
     connect(penRubberAct, SIGNAL(triggered()), this, SLOT(rubber()));
 
-    penLineAct = new QAction(tr("Linia..."), this);
+    penLineAct = new QAction(tr("Pędzel..."), this);
     connect(penLineAct, SIGNAL(triggered()), this, SLOT(line()));
 
     penRectangleAct = new QAction(tr("Kwadrat..."), this);
