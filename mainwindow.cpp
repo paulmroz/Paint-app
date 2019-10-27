@@ -7,13 +7,11 @@ MainWindow::MainWindow()
 {
     scribbleArea = new ScribbleArea;
     setCentralWidget(scribbleArea);
-
     createActions();
     createMenus();
 
-    setWindowTitle(tr("Scribble"));
-
-    resize(500, 500);
+    setWindowTitle(tr("Paint"));
+    resize(500, 600);
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -30,7 +28,7 @@ void MainWindow::open()
     if (maybeSave()) {
 
         QString fileName = QFileDialog::getOpenFileName(this,
-                                   tr("Open File"), QDir::currentPath());
+                                   tr("Otwórz plik"), QDir::currentPath());
 
         if (!fileName.isEmpty())
             scribbleArea->openImage(fileName);
@@ -54,26 +52,47 @@ void MainWindow::penColor()
         scribbleArea->setPenColor(newColor);
 }
 
+void MainWindow::rubber()
+{
+        scribbleArea->setPenColor(Qt::white);
+}
+
+void MainWindow::rectangle()
+{
+        scribbleArea->setShape(1);
+}
+
+void MainWindow::line()
+{
+        scribbleArea->setShape(0);
+}
+
+void MainWindow::circle()
+{
+        scribbleArea->setShape(2);
+}
+
+void MainWindow::straightLine()
+{
+        scribbleArea->setShape(3);
+}
+
 void MainWindow::penWidth()
 {
     bool ok;
-    int newWidth = QInputDialog::getInt(this, tr("Scribble"),
-                                        tr("Select pen width:"),
+    int newWidth = QInputDialog::getInt(this, tr("Paint"),
+                                        tr("Wybierz grubość pędzla:"),
                                         scribbleArea->penWidth(),
                                         1, 50, 1, &ok);
     if (ok)
         scribbleArea->setPenWidth(newWidth);
 }
 
-void MainWindow::about()
-{
-    QMessageBox::about(this, tr("About Scribble"),
-            tr("<p>The <b>Scribble</b> example is awesome</p>"));
-}
+
 
 void MainWindow::createActions()
 {
-    openAct = new QAction(tr("&Open..."), this);
+    openAct = new QAction(tr("Otwórz..."), this);
 
     openAct->setShortcuts(QKeySequence::Open);
 
@@ -92,58 +111,67 @@ void MainWindow::createActions()
     }
 
 
-    printAct = new QAction(tr("&Print..."), this);
+    printAct = new QAction(tr("&Drukuj..."), this);
     connect(printAct, SIGNAL(triggered()), scribbleArea, SLOT(print()));
 
 
-    exitAct = new QAction(tr("E&xit"), this);
+    exitAct = new QAction(tr("Wyjdź"), this);
     exitAct->setShortcuts(QKeySequence::Quit);
     connect(exitAct, SIGNAL(triggered()), this, SLOT(close()));
 
-    penColorAct = new QAction(tr("&Pen Color..."), this);
+    penColorAct = new QAction(tr("&Wybierz kolor..."), this);
     connect(penColorAct, SIGNAL(triggered()), this, SLOT(penColor()));
 
-    penWidthAct = new QAction(tr("Pen &Width..."), this);
+    penWidthAct = new QAction(tr("Wybierz grubość..."), this);
     connect(penWidthAct, SIGNAL(triggered()), this, SLOT(penWidth()));
 
-    clearScreenAct = new QAction(tr("&Clear Screen"), this);
+    penRubberAct = new QAction(tr("Gumka..."), this);
+    connect(penRubberAct, SIGNAL(triggered()), this, SLOT(rubber()));
+
+    penLineAct = new QAction(tr("Linia..."), this);
+    connect(penLineAct, SIGNAL(triggered()), this, SLOT(line()));
+
+    penRectangleAct = new QAction(tr("Kwadrat..."), this);
+    connect(penRectangleAct, SIGNAL(triggered()), this, SLOT(rectangle()));
+
+    penCircleAct = new QAction(tr("Koło..."), this);
+    connect(penCircleAct, SIGNAL(triggered()), this, SLOT(circle()));
+
+    penStraightLineAct = new QAction(tr("Prosta Linia..."), this);
+    connect(penStraightLineAct, SIGNAL(triggered()), this, SLOT(straightLine()));
+
+    clearScreenAct = new QAction(tr("&Wyczyść"), this);
     clearScreenAct->setShortcut(tr("Ctrl+L"));
     connect(clearScreenAct, SIGNAL(triggered()),
             scribbleArea, SLOT(clearImage()));
-
-    aboutAct = new QAction(tr("&About"), this);
-    connect(aboutAct, SIGNAL(triggered()), this, SLOT(about()));
-
-    aboutQtAct = new QAction(tr("About &Qt"), this);
-    connect(aboutQtAct, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
 }
 
 void MainWindow::createMenus()
 {
-    saveAsMenu = new QMenu(tr("&Save As"), this);
+    saveAsMenu = new QMenu(tr("&Zapisz jako"), this);
     foreach (QAction *action, saveAsActs)
         saveAsMenu->addAction(action);
 
-    fileMenu = new QMenu(tr("&File"), this);
+    fileMenu = new QMenu(tr("&Plik"), this);
     fileMenu->addAction(openAct);
     fileMenu->addMenu(saveAsMenu);
     fileMenu->addAction(printAct);
     fileMenu->addSeparator();
     fileMenu->addAction(exitAct);
 
-    optionMenu = new QMenu(tr("&Options"), this);
+    optionMenu = new QMenu(tr("&Opcje"), this);
     optionMenu->addAction(penColorAct);
     optionMenu->addAction(penWidthAct);
+    optionMenu->addAction(penRubberAct);
+    optionMenu->addAction(penLineAct);
+    optionMenu->addAction(penRectangleAct);
+    optionMenu->addAction(penCircleAct);
+    optionMenu->addAction(penStraightLineAct);
     optionMenu->addSeparator();
     optionMenu->addAction(clearScreenAct);
 
-    helpMenu = new QMenu(tr("&Help"), this);
-    helpMenu->addAction(aboutAct);
-    helpMenu->addAction(aboutQtAct);
-
     menuBar()->addMenu(fileMenu);
     menuBar()->addMenu(optionMenu);
-    menuBar()->addMenu(helpMenu);
 }
 
 bool MainWindow::maybeSave()
@@ -151,9 +179,9 @@ bool MainWindow::maybeSave()
     if (scribbleArea->isModified()) {
        QMessageBox::StandardButton ret;
 
-       ret = QMessageBox::warning(this, tr("Scribble"),
-                          tr("The image has been modified.\n"
-                             "Do you want to save your changes?"),
+       ret = QMessageBox::warning(this, tr("Paint"),
+                          tr("Obraz został zmodyfikowany\n"
+                             "Czy chcesz zapisać zmiany?."),
                           QMessageBox::Save | QMessageBox::Discard
                           | QMessageBox::Cancel);
 
@@ -171,7 +199,7 @@ bool MainWindow::saveFile(const QByteArray &fileFormat)
 {
     QString initialPath = QDir::currentPath() + "/untitled." + fileFormat;
 
-    QString fileName = QFileDialog::getSaveFileName(this, tr("Save As"),
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Zapisz jako"),
                                initialPath,
                                tr("%1 Files (*.%2);;All Files (*)")
                                .arg(QString::fromLatin1(fileFormat.toUpper()))
@@ -183,3 +211,7 @@ bool MainWindow::saveFile(const QByteArray &fileFormat)
         return scribbleArea->saveImage(fileName, fileFormat.constData());
     }
 }
+
+
+
+

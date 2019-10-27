@@ -6,17 +6,16 @@
 #include <QPrintDialog>
 #endif
 #endif
-
+#include<iostream>
 #include "scribblearea.h"
 
-ScribbleArea::ScribbleArea(QWidget *parent)
-    : QWidget(parent)
+ScribbleArea::ScribbleArea(QWidget *parent) : QWidget(parent)
 {
     setAttribute(Qt::WA_StaticContents);
-
     modified = false;
     scribbling = false;
-    myPenWidth = 1;
+    myPenWidth = 5;
+    shape = 0;
     myPenColor = Qt::blue;
 }
 
@@ -53,6 +52,11 @@ void ScribbleArea::setPenColor(const QColor &newColor)
     myPenColor = newColor;
 }
 
+void ScribbleArea::setShape(int newShape)
+{
+    shape = newShape;
+}
+
 void ScribbleArea::setPenWidth(int newWidth)
 {
     myPenWidth = newWidth;
@@ -70,21 +74,48 @@ void ScribbleArea::mousePressEvent(QMouseEvent *event)
     if (event->button() == Qt::LeftButton) {
         lastPoint = event->pos();
         scribbling = true;
+
+        beginingPoint = event->pos();
     }
 }
 
 
 void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
 {
-    if ((event->buttons() & Qt::LeftButton) && scribbling)
-        drawLineTo(event->pos());
+    if ((event->buttons() & Qt::LeftButton) && scribbling){
+        if(shape == 0){
+            drawLineTo(event->pos());
+        }
+//        if(shape == 1){
+//            //drawRectangle(event->pos());
+//            //beginingPoint = event->pos();
+//        }
+    }
+
 }
 
 void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton && scribbling) {
-        drawLineTo(event->pos());
-        scribbling = false;
+        if(shape == 0){
+            drawLineTo(event->pos());
+            scribbling = false;
+        }
+
+        if(shape == 1){
+            drawRectangle(event->pos());
+            scribbling = false;
+        }
+
+        if(shape == 2){
+            drawCircle(event->pos());
+            scribbling = false;
+        }
+
+        if(shape == 3){
+            drawStraigthLineTo(event->pos());
+            scribbling = false;
+        }
     }
 }
 
@@ -119,7 +150,82 @@ void ScribbleArea::drawLineTo(const QPoint &endPoint)
 
     modified = true;
 
-    int rad = (myPenWidth / 2) + 2;
+    int rad = (myPenWidth / 10) + 5;
+
+    update(QRect(lastPoint, endPoint).normalized()
+                                     .adjusted(-rad, -rad, +rad, +rad));
+
+    lastPoint = endPoint;
+}
+
+void ScribbleArea::drawStraigthLineTo(const QPoint &endPoint)
+{
+    QPainter painter(&image);
+
+    painter.setPen(QPen(myPenColor, myPenWidth, Qt::SolidLine, Qt::RoundCap,
+                        Qt::RoundJoin));
+
+    qInfo() << endPoint;
+    int x1 = beginingPoint.x();
+    int y1 = beginingPoint.y();
+    int x2 = endPoint.x();
+    int y2 = endPoint.y();
+
+    painter.drawLine(x1,y1,x2,y2);
+
+    modified = true;
+
+    int rad = (myPenWidth / 10) + 5;
+
+    update(QRect(lastPoint, endPoint).normalized()
+                                     .adjusted(-rad, -rad, +rad, +rad));
+
+    lastPoint = endPoint;
+}
+
+void ScribbleArea::drawRectangle(const QPoint &endPoint)
+{
+    QPainter painter(&image);
+
+    painter.setPen(QPen(myPenColor, myPenWidth, Qt::SolidLine, Qt::RoundCap,
+                        Qt::RoundJoin));
+
+    //painter.drawLine(lastPoint, endPoint);
+    qInfo() << endPoint;
+    int x = beginingPoint.x();
+    int y = beginingPoint.y();
+    int width = endPoint.x()-x;
+    int height= endPoint.y()-y;
+   painter.drawRect(QRect(x,y,width,height));
+
+    modified = true;
+
+    int rad = (myPenWidth / 4) + 4;
+
+    update(QRect(lastPoint, endPoint).normalized()
+                                     .adjusted(-rad, -rad, +rad, +rad));
+
+    lastPoint = endPoint;
+}
+
+void ScribbleArea::drawCircle(const QPoint &endPoint)
+{
+    QPainter painter(&image);
+
+    painter.setPen(QPen(myPenColor, myPenWidth, Qt::SolidLine, Qt::RoundCap,
+                        Qt::RoundJoin));
+
+    //painter.drawLine(lastPoint, endPoint);
+    qInfo() << endPoint;
+    int x = beginingPoint.x();
+    int y = beginingPoint.y();
+    int width = endPoint.x()-x;
+    int height= endPoint.y()-y;
+   painter.drawEllipse(QRect(x,y,width,height));
+
+    modified = true;
+
+    int rad = (myPenWidth / 4) + 4;
 
     update(QRect(lastPoint, endPoint).normalized()
                                      .adjusted(-rad, -rad, +rad, +rad));
