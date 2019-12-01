@@ -16,7 +16,7 @@ ScribbleArea::ScribbleArea(QWidget *parent) : QWidget(parent)
     scribbling = false;
     myPenWidth = 5;
     shape = 0;
-    myPenColor = Qt::blue;
+    myPenColor = Qt::black;
 }
 
 bool ScribbleArea::openImage(const QString &fileName)
@@ -86,10 +86,10 @@ void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
         if(shape == 0){
             drawLineTo(event->pos());
         }
-//        if(shape == 1){
-//            //drawRectangle(event->pos());
-//            //beginingPoint = event->pos();
-//        }
+        //        if(shape == 1){
+        //            //drawRectangle(event->pos());
+        //            //beginingPoint = event->pos();
+        //        }
     }
 
 }
@@ -98,22 +98,32 @@ void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton && scribbling) {
         if(shape == 0){
+            this->setCursor(Qt::ArrowCursor);
             drawLineTo(event->pos());
             scribbling = false;
         }
 
         if(shape == 1){
+            this->setCursor(Qt::UpArrowCursor);
             drawRectangle(event->pos());
             scribbling = false;
         }
 
         if(shape == 2){
+            this->setCursor(Qt::UpArrowCursor);
             drawCircle(event->pos());
             scribbling = false;
         }
 
         if(shape == 3){
+            this->setCursor(Qt::CrossCursor);
             drawStraigthLineTo(event->pos());
+            scribbling = false;
+        }
+
+        if(shape == 4){
+            this->setCursor(Qt::CrossCursor);
+            fillShape(event->pos());
             scribbling = false;
         }
     }
@@ -146,16 +156,18 @@ void ScribbleArea::drawLineTo(const QPoint &endPoint)
     painter.setPen(QPen(myPenColor, myPenWidth, Qt::SolidLine, Qt::RoundCap,
                         Qt::RoundJoin));
 
+
     painter.drawLine(lastPoint, endPoint);
 
     modified = true;
 
-    int rad = (myPenWidth / 10) + 5;
+    int rad = (myPenWidth / 1) + 1;
 
     update(QRect(lastPoint, endPoint).normalized()
-                                     .adjusted(-rad, -rad, +rad, +rad));
+           .adjusted(-rad, -rad, +rad, +rad));
 
     lastPoint = endPoint;
+
 }
 
 void ScribbleArea::drawStraigthLineTo(const QPoint &endPoint)
@@ -175,13 +187,75 @@ void ScribbleArea::drawStraigthLineTo(const QPoint &endPoint)
 
     modified = true;
 
-    int rad = (myPenWidth / 10) + 5;
+    int rad = (myPenWidth / 1) + 1;
 
     update(QRect(lastPoint, endPoint).normalized()
-                                     .adjusted(-rad, -rad, +rad, +rad));
+           .adjusted(-rad, -rad, +rad, +rad));
 
     lastPoint = endPoint;
 }
+
+
+int ScribbleArea::fill(int x, int y, QColor color){
+     //qInfo() <<"b";
+     // qInfo() <<x;
+     // qInfo() <<y;
+     //qInfo() << color;
+    QPainter painter(&image);
+
+    painter.setPen(QPen(myPenColor, myPenWidth, Qt::SolidLine, Qt::RoundCap,
+                        Qt::RoundJoin));
+
+    if(x<0 || x>500 || y<0 || y>600){
+        return 0;
+    }
+
+    QColor colorPixelcheck = image.pixelColor(x,y);
+    //qInfo() <<"a";
+   // qInfo() << colorPixelcheck;
+
+    if(colorPixelcheck != color){
+       // qInfo() << "test1";
+        return 1;
+    }
+
+    if(colorPixelcheck == color){
+        //qInfo() << "test";
+        painter.drawPoint(x,y);
+        update();
+        painter.end();
+        //qInfo() << "test_color:";
+        //qInfo() << image.pixelColor(x,y);
+        fill(x-1,y-1, color);
+        fill(x,y-1, color);
+        fill(x+1,y-1, color);
+        fill(x-1,y, color);
+        fill(x+1,y, color);
+        fill(x-1,y+1, color);
+//        fill(x,y+1, color);
+//        fill(x+1,y+1, color);
+    }
+
+    return 1;
+
+}
+
+void ScribbleArea::fillShape(const QPoint &endPoint)
+{
+
+    //qInfo() << endPoint;
+
+    int x1 = endPoint.x();
+    int y1 = endPoint.y();
+    setPenWidth(1);
+    recursioncolor = image.pixelColor(x1,y1);
+    fill(x1, y1, recursioncolor);
+
+    return;
+
+}
+
+
 
 void ScribbleArea::drawRectangle(const QPoint &endPoint)
 {
@@ -196,14 +270,14 @@ void ScribbleArea::drawRectangle(const QPoint &endPoint)
     int y = beginingPoint.y();
     int width = endPoint.x()-x;
     int height= endPoint.y()-y;
-   painter.drawRect(QRect(x,y,width,height));
+    painter.drawRect(QRect(x,y,width,height));
 
     modified = true;
 
-    int rad = (myPenWidth / 4) + 4;
+    int rad = (myPenWidth / 1) + 1;
 
     update(QRect(lastPoint, endPoint).normalized()
-                                     .adjusted(-rad, -rad, +rad, +rad));
+           .adjusted(-rad, -rad, +rad, +rad));
 
     lastPoint = endPoint;
 }
@@ -221,14 +295,14 @@ void ScribbleArea::drawCircle(const QPoint &endPoint)
     int y = beginingPoint.y();
     int width = endPoint.x()-x;
     int height= endPoint.y()-y;
-   painter.drawEllipse(QRect(x,y,width,height));
+    painter.drawEllipse(QRect(x,y,width,height));
 
     modified = true;
 
     int rad = (myPenWidth / 4) + 4;
 
     update(QRect(lastPoint, endPoint).normalized()
-                                     .adjusted(-rad, -rad, +rad, +rad));
+           .adjusted(-rad, -rad, +rad, +rad));
 
     lastPoint = endPoint;
 }

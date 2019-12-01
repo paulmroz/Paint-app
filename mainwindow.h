@@ -34,6 +34,8 @@ private slots:
     void circle();
     void straightLine();
 
+    void filler();
+
 private:
 
     void createActions();
@@ -58,7 +60,11 @@ private:
     QAction *penCircleAct;
     QAction *penStraightLineAct;
     QAction *printAct;
+    QAction *fillerAct;
     QAction *clearScreenAct;
+
+    int pixActuel;
+    QVector<QPixmap*> pixmapListe;
 
 };
 

@@ -12,6 +12,10 @@ MainWindow::MainWindow()
 
     setWindowTitle(tr("Paint"));
     resize(500, 600);
+     //resize(10, 20);
+    pixmapListe.push_back(new QPixmap(500,600));
+    pixActuel = pixmapListe.size()-1;
+    pixmapListe[pixActuel]->fill();
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -54,6 +58,7 @@ void MainWindow::penColor()
 
 void MainWindow::rubber()
 {
+        scribbleArea->setShape(0);
         scribbleArea->setPenColor(Qt::white);
 }
 
@@ -75,6 +80,11 @@ void MainWindow::circle()
 void MainWindow::straightLine()
 {
         scribbleArea->setShape(3);
+}
+
+void MainWindow::filler()
+{
+        scribbleArea->setShape(4);
 }
 
 void MainWindow::penWidth()
@@ -140,6 +150,9 @@ void MainWindow::createActions()
     penStraightLineAct = new QAction(tr("Prosta Linia..."), this);
     connect(penStraightLineAct, SIGNAL(triggered()), this, SLOT(straightLine()));
 
+    fillerAct = new QAction(tr("Wypełnianie"), this);
+    connect(fillerAct, SIGNAL(triggered()), this, SLOT(filler()));
+
     clearScreenAct = new QAction(tr("&Wyczyść"), this);
     clearScreenAct->setShortcut(tr("Ctrl+L"));
     connect(clearScreenAct, SIGNAL(triggered()),
@@ -167,6 +180,7 @@ void MainWindow::createMenus()
     optionMenu->addAction(penRectangleAct);
     optionMenu->addAction(penCircleAct);
     optionMenu->addAction(penStraightLineAct);
+    optionMenu->addAction(fillerAct);
     optionMenu->addSeparator();
     optionMenu->addAction(clearScreenAct);
 

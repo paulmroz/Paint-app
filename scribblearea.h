@@ -37,15 +37,23 @@ private:
     void drawStraigthLineTo(const QPoint &endPoint);
     void drawRectangle(const QPoint &endPoint);
     void drawCircle(const QPoint &endPoint);
+    void fillShape(const QPoint &endPoint);
     void resizeImage(QImage *image, const QSize &newSize);
+
+    int fill(int x,int y, QColor colorPixel);
+
     bool modified;
     bool scribbling;
     int myPenWidth;
     int shape;
     QColor myPenColor;
+    QColor myprevPenColor;
     QImage image;
     QPoint lastPoint;
     QPoint beginingPoint;
+
+    QColor recursioncolor;
+
 };
 
 #endif
