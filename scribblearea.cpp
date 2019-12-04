@@ -156,7 +156,7 @@ void ScribbleArea::drawLineTo(const QPoint &endPoint)
     painter.setPen(QPen(myPenColor, myPenWidth, Qt::SolidLine, Qt::RoundCap,
                         Qt::RoundJoin));
 
-
+    setPenWidth(5);
     painter.drawLine(lastPoint, endPoint);
 
     modified = true;
@@ -206,10 +206,13 @@ int ScribbleArea::fill(int x, int y, QColor color){
     painter.setPen(QPen(myPenColor, myPenWidth, Qt::SolidLine, Qt::RoundCap,
                         Qt::RoundJoin));
 
-    if(x<0 || x>image.width() || y<0 || y>image.height()){
-        return 0;
-    }
+//    if((x<=-1) || (x>=image.width()) || (y<=-1) || (y>image.height()-20)){
+//        return 0;
+//    }
 
+    if((x<=-1) || (x>=500) || (y<=-1) || (y>=480)){
+        return 1;
+    }
     QColor colorPixelcheck = image.pixelColor(x,y);
     //qInfo() <<"a";
    // qInfo() << colorPixelcheck;
@@ -226,14 +229,14 @@ int ScribbleArea::fill(int x, int y, QColor color){
         painter.end();
         //qInfo() << "test_color:";
         //qInfo() << image.pixelColor(x,y);
-        fill(x-1,y-1, color);
-        fill(x,y-1, color);
-        fill(x+1,y-1, color);
-        fill(x-1,y, color);
-        fill(x+1,y, color);
-        fill(x-1,y+1, color);
-        fill(x,y+1, color);
-        fill(x+1,y+1, color);
+//        fill(x-1,y-1, color);
+          fill(x,y-1, color);
+//        fill(x+1,y-1, color);
+          fill(x-1,y, color);
+          fill(x+1,y, color);
+//        fill(x-1,y+1, color);
+          fill(x,y+1, color);
+//        fill(x+1,y+1, color);
     }
 
     return 1;
@@ -254,7 +257,7 @@ void ScribbleArea::fillShape(const QPoint &endPoint)
     recursioncolor = image.pixelColor(x1,y1);
     fill(x1, y1, recursioncolor);
 
-
+    return;
 
 }
 

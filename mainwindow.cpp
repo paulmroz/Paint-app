@@ -11,7 +11,7 @@ MainWindow::MainWindow()
     createMenus();
 
     setWindowTitle(tr("Paint"));
-    resize(500, 600);
+    resize(500, 500);
      //resize(10, 20);
     pixmapListe.push_back(new QPixmap(500,600));
     pixActuel = pixmapListe.size()-1;
