@@ -156,7 +156,6 @@ void ScribbleArea::drawLineTo(const QPoint &endPoint)
     painter.setPen(QPen(myPenColor, myPenWidth, Qt::SolidLine, Qt::RoundCap,
                         Qt::RoundJoin));
 
-    setPenWidth(5);
     painter.drawLine(lastPoint, endPoint);
 
     modified = true;
@@ -255,8 +254,11 @@ void ScribbleArea::fillShape(const QPoint &endPoint)
     int y1 = endPoint.y();
     setPenWidth(1);
     recursioncolor = image.pixelColor(x1,y1);
+    if(recursioncolor==myPenColor){
+        return;
+    }
     fill(x1, y1, recursioncolor);
-
+    setPenWidth(5);
     return;
 
 }

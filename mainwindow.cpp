@@ -60,6 +60,7 @@ void MainWindow::rubber()
 {
         scribbleArea->setShape(0);
         scribbleArea->setPenColor(Qt::white);
+
 }
 
 void MainWindow::rectangle()
