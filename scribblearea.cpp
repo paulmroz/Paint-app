@@ -4,21 +4,28 @@
 #if QT_CONFIG(printdialog)
 #include <QPrinter>
 #include <QPrintDialog>
+#include <QPoint>
 #endif
 #endif
 #include<iostream>
+#include <queue>
+#include <vector>
 #include "scribblearea.h"
 
+
+///Obiekt dziedziczący po QWidget, w środku ustalane są parametry początkowe
 ScribbleArea::ScribbleArea(QWidget *parent) : QWidget(parent)
 {
     setAttribute(Qt::WA_StaticContents);
+    myScriWidth=500;
+    myScriHeight=600;
     modified = false;
     scribbling = false;
     myPenWidth = 5;
     shape = 0;
     myPenColor = Qt::black;
 }
-
+///Funckja odpowiedzialna za otwiernia pliku, na wejściu przyjmuje nazwe pliku, zwraca true albo false, jeżeli nie udało sie wczytać pliku o podanej nazwie zwraca false. Dodatkowo funkja dostosowuje rozmiar płótna do obrazu
 bool ScribbleArea::openImage(const QString &fileName)
 {
     QImage loadedImage;
@@ -33,7 +40,7 @@ bool ScribbleArea::openImage(const QString &fileName)
     update();
     return true;
 }
-
+///Funkja odpowiedzialna za zapisanie obrazu. Przyjmuje nazwe pliku i format, zwraca true albo false.
 bool ScribbleArea::saveImage(const QString &fileName, const char *fileFormat)
 {
     QImage visibleImage = image;
@@ -46,29 +53,29 @@ bool ScribbleArea::saveImage(const QString &fileName, const char *fileFormat)
         return false;
     }
 }
-
+///Funkja odpowiedzialna za ustawienie koluru pena.
 void ScribbleArea::setPenColor(const QColor &newColor)
 {
     myPenColor = newColor;
 }
-
+///Funkja odpowiedzialna za ustawienie kształtu pena.
 void ScribbleArea::setShape(int newShape)
 {
     shape = newShape;
 }
-
+///Funkja odpowiedzialna za ustawienie rozmiaru pena.
 void ScribbleArea::setPenWidth(int newWidth)
 {
     myPenWidth = newWidth;
 }
-
+///Funkja odpowiedzialna za czyszczenie płótna zaznacza ze obraz był modyfikowany.
 void ScribbleArea::clearImage()
 {
     image.fill(qRgb(255, 255, 255));
     modified = true;
     update();
 }
-
+///Funkja odpowiedzialna obsługe zdarzenia kliknięcia lpm. Zapisuje w beginingPoint oraz w lastPoint pozycje gdzie sie znajduje kursor.
 void ScribbleArea::mousePressEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton) {
@@ -79,53 +86,60 @@ void ScribbleArea::mousePressEvent(QMouseEvent *event)
     }
 }
 
-
+///Funkja odpowiedzialna obsługe zdarzenia przesunięcia myszki z wcisnietym lpm. Mamy tu 2 przypadki 1. jest narzedzie pióro, a 2. gumka. Przekazuje pocyje w którym ma miejsce zdażenie.
 void ScribbleArea::mouseMoveEvent(QMouseEvent *event)
 {
     if ((event->buttons() & Qt::LeftButton) && scribbling){
         if(shape == 0){
             drawLineTo(event->pos());
         }
-        //        if(shape == 1){
-        //            //drawRectangle(event->pos());
-        //            //beginingPoint = event->pos();
-        //        }
+        if(shape == 5){
+            QColor SaveC =penColor();
+            int SSize =penWidth();
+            setPenWidth(15);
+            setPenColor(Qt::white);
+            drawLineTo(event->pos());
+            setPenColor(SaveC);
+            setPenWidth(SSize);
+        }
     }
 
 }
-
+///Funkcja odpowiedzialna za zwolnienie obsługe zdarzenia zwolnienia przycisku myszki, zwolnienie lewego przycisku myszki ustawia scribbling na false wiec dalszy ruch myszki nie bedzie rejestrowany, dodatkowo do funksji przkazywany jest pixel na którym był kursor przy zwolnieniu myszki co okresla jakiej wielkości ma byc rysowany obiekt
 void ScribbleArea::mouseReleaseEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton && scribbling) {
         if(shape == 0){
-            this->setCursor(Qt::ArrowCursor);
             drawLineTo(event->pos());
             scribbling = false;
         }
 
         if(shape == 1){
-            this->setCursor(Qt::UpArrowCursor);
+
             drawRectangle(event->pos());
             scribbling = false;
         }
 
         if(shape == 2){
-            this->setCursor(Qt::UpArrowCursor);
+
             drawCircle(event->pos());
             scribbling = false;
         }
 
         if(shape == 3){
-            this->setCursor(Qt::CrossCursor);
             drawStraigthLineTo(event->pos());
             scribbling = false;
         }
 
         if(shape == 4){
-            this->setCursor(Qt::CrossCursor);
+            QColor SaveC =penColor();
+            int SSize =penWidth();
             fillShape(event->pos());
             scribbling = false;
+            setPenColor(SaveC);
+            setPenWidth(SSize);
         }
+
     }
 }
 
@@ -137,24 +151,27 @@ void ScribbleArea::paintEvent(QPaintEvent *event)
 
     painter.drawImage(dirtyRect, image, dirtyRect);
 }
-
+///Funckja która obsługuje zdarzenie zmiany rozmiaru okna, nic nie zwraca, w przypadku zdarzenia albo dodaje do szerokości i długosci 4 pixeli bądź zmienia rozmiar płutna do rozmiaru image.
 void ScribbleArea::resizeEvent(QResizeEvent *event)
 {
     if (width() > image.width() || height() > image.height()) {
-        int newWidth = qMax(width() + 128, image.width());
-        int newHeight = qMax(height() + 128, image.height());
+        int newWidth = qMax(width() + 4, image.width());
+        int newHeight = qMax(height() + 4, image.height());
+        myScriWidth=newWidth;
+        myScriHeight=newHeight;
         resizeImage(&image, QSize(newWidth, newHeight));
         update();
     }
     QWidget::resizeEvent(event);
 }
-
+///Funckja polegająca na rysowaniu "lini" z punktu począatkowego do podanego jako argument punktu końcowego, jako ze obsługuje narzędzia pendzlopodbne w praktyce z kazdym ruchem myszki z wciśniętym lpm rysuje sie kropka o rozmiarach pedzla. W przypadku rysowania prostych lini działa domyslnie.
 void ScribbleArea::drawLineTo(const QPoint &endPoint)
 {
     QPainter painter(&image);
 
     painter.setPen(QPen(myPenColor, myPenWidth, Qt::SolidLine, Qt::RoundCap,
                         Qt::RoundJoin));
+
 
     painter.drawLine(lastPoint, endPoint);
 
@@ -168,7 +185,7 @@ void ScribbleArea::drawLineTo(const QPoint &endPoint)
     lastPoint = endPoint;
 
 }
-
+///Funckja polegająca na rysowaniu prostej lini z punktu początkowego do podanego jako argument, punktu końcowego i wykkonuje funkcje drawLine(). Ustawia zmienną modified na true. Oraz odświerza płótno.
 void ScribbleArea::drawStraigthLineTo(const QPoint &endPoint)
 {
     QPainter painter(&image);
@@ -195,85 +212,66 @@ void ScribbleArea::drawStraigthLineTo(const QPoint &endPoint)
 }
 
 
-int ScribbleArea::fill(int x, int y, QColor color){
-     //qInfo() <<"b";
-     // qInfo() <<x;
-     // qInfo() <<y;
-     //qInfo() << color;
-    QPainter painter(&image);
 
-    painter.setPen(QPen(myPenColor, myPenWidth, Qt::SolidLine, Qt::RoundCap,
-                        Qt::RoundJoin));
+///Funkcja wypełniające przestrzenie, działą iteracyjnie, poniewaz werja algorytmu rekurencyjna jest niepraktyczna ze względu na przepełnienie stosu. Ustawia pixel początkowy do kolejki "do pomalowania" gdy ma inny kolor niz rządany, następnie go koloruje i sprawdza pixele w 4 strony góra,prawo, dół i lewo. Jeżeli ich kolor jest inny niz pożądany dodaje je na kolejke. Pętla bedzie się wykonywac dopóki kolejka nie będzie pusta.
+void ScribbleArea::fill(int x, int y, QColor color) {
+    QPoint source = QPoint(x,y);
+    QColor sourceColor = image.pixelColor(source);
+    if (sourceColor == color) {
+            return ;
+        }
+    image.setPixel(source, color.rgb());
 
-//    if((x<=-1) || (x>=image.width()) || (y<=-1) || (y>image.height()-20)){
-//        return 0;
-//    }
+    std::queue<QPoint> pixelsQueue;
+    pixelsQueue.push(source);
 
-    if((x<=-1) || (x>=500) || (y<=-1) || (y>=480)){
-        return 1;
+    while (!pixelsQueue.empty() ) {
+        QPoint current_pixel = pixelsQueue.front();
+        pixelsQueue.pop();
+
+
+        if (sourceColor == image.pixelColor(current_pixel.x()+1,current_pixel.y())) {
+            QPoint pixel_to_color = QPoint(current_pixel.x()+1, current_pixel.y());
+            image.setPixel(pixel_to_color, color.rgb());
+            pixelsQueue.push(pixel_to_color);
+        }
+        if (sourceColor == image.pixelColor(current_pixel.x()-1,current_pixel.y())){
+            QPoint pixel_to_color = QPoint(current_pixel.x()-1, current_pixel.y());
+            image.setPixel(pixel_to_color, color.rgb());
+            pixelsQueue.push(pixel_to_color);
+        }
+        if (sourceColor == image.pixelColor(current_pixel.x(),current_pixel.y()+1)){
+            QPoint pixel_to_color = QPoint(current_pixel.x(),current_pixel.y()+1);
+            image.setPixel(pixel_to_color, color.rgb());
+            pixelsQueue.push(pixel_to_color);
+        }
+        if (sourceColor == image.pixelColor(current_pixel.x(),current_pixel.y()-1)){
+            QPoint pixel_to_color = QPoint(current_pixel.x(),current_pixel.y()-1);
+            image.setPixel(pixel_to_color, color.rgb());
+            pixelsQueue.push(pixel_to_color);
+        }
     }
-    QColor colorPixelcheck = image.pixelColor(x,y);
-    //qInfo() <<"a";
-   // qInfo() << colorPixelcheck;
-
-    if(colorPixelcheck != color){
-       // qInfo() << "test1";
-        return 1;
-    }
-
-    if(colorPixelcheck == color){
-        //qInfo() << "test";
-        painter.drawPoint(x,y);
-        update();
-        painter.end();
-        //qInfo() << "test_color:";
-        //qInfo() << image.pixelColor(x,y);
-//        fill(x-1,y-1, color);
-          fill(x,y-1, color);
-//        fill(x+1,y-1, color);
-          fill(x-1,y, color);
-          fill(x+1,y, color);
-//        fill(x-1,y+1, color);
-          fill(x,y+1, color);
-//        fill(x+1,y+1, color);
-    }
-
-    return 1;
-
+    update();
 }
-
+///Funkcja pomocnicza do wypełniania
 void ScribbleArea::fillShape(const QPoint &endPoint)
 {
-
-    //qInfo() << endPoint;
-    qInfo() << image.size();
-    qInfo() << image.width();
-    qInfo() << image.height();
-
     int x1 = endPoint.x();
     int y1 = endPoint.y();
     setPenWidth(1);
-    recursioncolor = image.pixelColor(x1,y1);
-    if(recursioncolor==myPenColor){
-        return;
-    }
-    fill(x1, y1, recursioncolor);
-    setPenWidth(5);
+    fill(x1, y1, myPenColor);
+
     return;
 
 }
 
-
-
+///Funkcja rysujaca kwadrat, posiadając dwa przeciwległe położenia wierzchołków mozna narysowac kwadrat. Uzywamy do tego gotowej funkcji drawRect, jednak przed obliczamy wysokośc i długość z punktów.
 void ScribbleArea::drawRectangle(const QPoint &endPoint)
 {
     QPainter painter(&image);
 
-    painter.setPen(QPen(myPenColor, myPenWidth, Qt::SolidLine, Qt::RoundCap,
-                        Qt::RoundJoin));
+    painter.setPen(QPen(myPenColor, myPenWidth, Qt::SolidLine, Qt::RoundCap,Qt::RoundJoin));
 
-    //painter.drawLine(lastPoint, endPoint);
-    qInfo() << endPoint;
     int x = beginingPoint.x();
     int y = beginingPoint.y();
     int width = endPoint.x()-x;
@@ -289,16 +287,12 @@ void ScribbleArea::drawRectangle(const QPoint &endPoint)
 
     lastPoint = endPoint;
 }
-
+///Funkcja używana do rysowania elipsy, ptrzebujemy tyle samo informacji co w kwadracie ponieważ rysujemy elipse która jest w niego wpisana. na koniec odświeżamy płótno
 void ScribbleArea::drawCircle(const QPoint &endPoint)
 {
     QPainter painter(&image);
 
-    painter.setPen(QPen(myPenColor, myPenWidth, Qt::SolidLine, Qt::RoundCap,
-                        Qt::RoundJoin));
-
-    //painter.drawLine(lastPoint, endPoint);
-    qInfo() << endPoint;
+    painter.setPen(QPen(myPenColor, myPenWidth, Qt::SolidLine, Qt::RoundCap,Qt::RoundJoin));
     int x = beginingPoint.x();
     int y = beginingPoint.y();
     int width = endPoint.x()-x;
@@ -309,12 +303,11 @@ void ScribbleArea::drawCircle(const QPoint &endPoint)
 
     int rad = (myPenWidth / 4) + 4;
 
-    update(QRect(lastPoint, endPoint).normalized()
-           .adjusted(-rad, -rad, +rad, +rad));
+    update();
 
     lastPoint = endPoint;
 }
-
+///Funckja zmieniające rozmiar image na podany w argumentach. Dodatkowo przyjmuje wskaźnik na image. Nowy obszar wypełniany jest białym kolorem. Następnie w pixelu 0,0 rysowany jest image.
 void ScribbleArea::resizeImage(QImage *image, const QSize &newSize)
 {
     if (image->size() == newSize)
@@ -328,7 +321,7 @@ void ScribbleArea::resizeImage(QImage *image, const QSize &newSize)
     *image = newImage;
 }
 
-
+///Funkcja odpowiedzialna za drukowanie. Wiekszosc jest przygotowana przez framework Qt, należy podać tylko odpowiednie dane do funkcji QPrint.
 void ScribbleArea::print()
 {
 
